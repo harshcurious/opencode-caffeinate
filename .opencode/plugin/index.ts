@@ -1,6 +1,6 @@
 import type { Plugin } from "@opencode-ai/plugin";
 import { SessionManager } from "./session-manager";
-import { CaffeinateManager } from "./caffeinate-manager";
+import { InhibitorManager, getInhibitorCommand } from "./inhibitor-manager";
 
 export const CaffeinatePlugin: Plugin = async ({
   project,
@@ -21,14 +21,13 @@ export const CaffeinatePlugin: Plugin = async ({
     }).catch(() => {});
   };
 
-  // Check if on macOS
-  if (process.platform !== "darwin") {
-    logFn("Plugin disabled: only available on macOS", "warn");
+  if (!getInhibitorCommand(process.platform)) {
+    logFn("Plugin disabled: only available on macOS and Linux", "warn");
     return {};
   }
 
   const sessionManager = new SessionManager();
-  const caffeinateManager = new CaffeinateManager();
+  const inhibitorManager = new InhibitorManager();
 
   // Fire-and-forget log to avoid blocking initialization
   logFn("Plugin initialized", "info");
@@ -39,18 +38,18 @@ export const CaffeinatePlugin: Plugin = async ({
         case "session.created":
           sessionManager.registerSession(process.pid);
           
-          if (caffeinateManager.isRunning()) {
-            const pid = caffeinateManager.getPid();
-            logFn(`Session started. caffeinate already running (PID: ${pid})`, "debug");
+          if (inhibitorManager.isRunning()) {
+            const pid = inhibitorManager.getPid();
+            logFn(`Session started. sleep inhibitor already running (PID: ${pid})`, "debug");
             return;
           }
           
           try {
-            await caffeinateManager.start();
-            const pid = caffeinateManager.getPid();
-            logFn(`caffeinate started (PID: ${pid})`, "info");
+            await inhibitorManager.start();
+            const pid = inhibitorManager.getPid();
+            logFn(`Sleep inhibitor started (PID: ${pid})`, "info");
           } catch (error) {
-            logFn(`Failed to start caffeinate: ${error}`, "error");
+            logFn(`Failed to start sleep inhibitor: ${error}`, "error");
           }
           break;
 
@@ -64,13 +63,13 @@ export const CaffeinatePlugin: Plugin = async ({
             return;
           }
           
-          if (caffeinateManager.isRunning()) {
+          if (inhibitorManager.isRunning()) {
             try {
-              const pid = caffeinateManager.getPid();
-              await caffeinateManager.stop();
-              logFn(`caffeinate stopped (PID: ${pid})`, "info");
+              const pid = inhibitorManager.getPid();
+              await inhibitorManager.stop();
+              logFn(`Sleep inhibitor stopped (PID: ${pid})`, "info");
             } catch (error) {
-              logFn(`Failed to stop caffeinate: ${error}`, "error");
+              logFn(`Failed to stop sleep inhibitor: ${error}`, "error");
             }
           }
           break;

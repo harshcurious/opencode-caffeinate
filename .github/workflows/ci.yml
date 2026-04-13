@@ -14,8 +14,12 @@ permissions:
 jobs:
   test:
     name: Test
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
 
     steps:
       - name: Checkout
@@ -31,6 +35,9 @@ jobs:
 
       - name: Type check
         run: bun run --bun tsc --noEmit
+
+      - name: Run tests
+        run: bun run test
 
       - name: Verify plugin exports
         run: |

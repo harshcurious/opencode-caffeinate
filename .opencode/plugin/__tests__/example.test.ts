@@ -1,4 +1,5 @@
 import { describe, test, expect } from "bun:test";
+import { getInhibitorCommand } from "../inhibitor-manager";
 
 describe("Test Infrastructure", () => {
   test("example test passes", () => {
@@ -7,5 +8,9 @@ describe("Test Infrastructure", () => {
   
   test("bun test is working", () => {
     expect(true).toBe(true);
+  });
+
+  test("linux is now a supported platform", () => {
+    expect(getInhibitorCommand("linux")).not.toBeNull();
   });
 });
