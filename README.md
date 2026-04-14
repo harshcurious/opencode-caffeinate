@@ -1,25 +1,27 @@
 # opencode-caffeinate
 
-Prevent macOS and Linux systems from sleeping while OpenCode sessions are active.
+Keep OpenCode sessions awake on macOS and Linux.
 
-## What it does
+## Overview
 
-This plugin automatically starts a platform-specific sleep inhibitor when an OpenCode session starts, keeping your machine awake during long AI coding sessions. When all sessions end, the inhibitor is stopped to restore normal power management.
+This plugin starts a platform-specific sleep inhibitor when an OpenCode session begins and stops it when the last session ends.
 
-**Backends used:**
+### Supported backends
+
 - macOS: `caffeinate -dim`
-- Linux (systemd): `systemd-inhibit --what=idle:sleep --mode=block sleep infinity`
+- Linux: `systemd-inhibit --what=idle:sleep --mode=block sleep infinity`
 
-**macOS flags used:**
-- `-d`: Prevent display sleep
-- `-i`: Prevent idle sleep
-- `-m`: Prevent disk sleep
+### macOS flags
+
+- `-d`: prevent display sleep
+- `-i`: prevent idle sleep
+- `-m`: prevent disk sleep
 
 ## Installation
 
-### From npm (recommended)
+### npm
 
-Add to your `opencode.json`:
+Add the plugin to `opencode.json`:
 
 ```json
 {
@@ -28,46 +30,45 @@ Add to your `opencode.json`:
 }
 ```
 
-### From local files
+### Local install
 
-Clone this repo to your plugins directory:
+Clone the repo into your OpenCode plugins directory:
 
 ```bash
-# Global plugins
 git clone https://github.com/nguyenphutrong/opencode-caffeinate.git ~/.config/opencode/plugins/opencode-caffeinate
+```
 
-# Or project-level
+For a project-level install, use:
+
+```bash
 git clone https://github.com/nguyenphutrong/opencode-caffeinate.git .opencode/plugins/opencode-caffeinate
 ```
 
 ## Requirements
 
-- **macOS** with `caffeinate`, or **Linux** with a usable `systemd-inhibit` / logind environment
-- **Bun** >= 1.0.0
-- **OpenCode** with plugin support
+- OpenCode with plugin support
+- Bun 1.0 or later
+- macOS with `caffeinate`, or Linux with `systemd-inhibit` and logind access
+
+## Usage
+
+No manual start is needed. Once installed, the plugin activates on session events and manages the inhibitor automatically.
 
 ## How it works
 
-1. When a session is created (`session.created` event), the plugin registers the session in `/tmp/opencode-caffeinate/sessions/`
-2. A single inhibitor process is spawned if not already running (tracked via PID file at `/tmp/opencode-caffeinate/inhibitor.pid`)
-3. Multiple parallel OpenCode instances are supported - sessions are tracked across processes
-4. When a session ends (`session.idle` or `session.deleted` events), the session is unregistered
-5. When all sessions across all instances end, the inhibitor is stopped automatically
+1. On `session.created`, the plugin records the session in `/tmp/opencode-caffeinate/sessions/`
+2. If no inhibitor is running, it starts one and writes its PID to `/tmp/opencode-caffeinate/inhibitor.pid`
+3. Session state is shared across OpenCode processes, so multiple instances can run at once
+4. On `session.idle` or `session.deleted`, the plugin removes the session record
+5. When the last active session ends, the inhibitor stops
 
-**Cross-process synchronization:** The plugin uses file-based session tracking to correctly handle multiple OpenCode instances running in parallel. Each session creates a PID file, and stale sessions (crashed processes) are automatically detected and ignored.
-
-**Linux scope:** Linux support currently targets systems where `systemd-inhibit` is available in `PATH` and can talk to logind.
+The file-based session tracker also ignores stale entries from crashed processes.
 
 ## Development
 
 ```bash
-# Install dependencies
 bun install
-
-# Run tests
 bun run test
-
-# Type check
 bun run --bun tsc --noEmit
 ```
 
