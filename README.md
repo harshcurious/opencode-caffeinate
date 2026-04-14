@@ -19,7 +19,7 @@ This plugin starts a platform-specific sleep inhibitor when an OpenCode session 
 
 ## Installation
 
-### npm
+<!--### npm
 
 Add the plugin to `opencode.json`:
 
@@ -28,7 +28,7 @@ Add the plugin to `opencode.json`:
   "$schema": "https://opencode.ai/config.json",
   "plugin": ["opencode-caffeinate"]
 }
-```
+```-->
 
 ### Local install
 
